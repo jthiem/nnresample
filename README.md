@@ -9,6 +9,11 @@ begins) falls on the Nyquist frequency (half of the sampling rate).  Thus the na
 'nnresample" for "Null-on-Nyquist Resample" --- the aternate name 
 "nonresample" was deemed too confusing.
 
+Please report bugs at https://github.com/jthiem/nnresample
+
+This code is licensed under a Creative Commons Attribution 3.0 Unported (CC BY 3.0) 
+License (https://creativecommons.org/licenses/by/3.0/)
+
 ## Usage
 
 ```
