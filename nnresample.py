@@ -1,8 +1,13 @@
+from __future__ import division
 import scipy.signal as sig
-from math import gcd
 import numpy as np
 
-__version__ = '0.1.1'
+try:
+    from math import gcd
+except:
+    from fractions import gcd
+    
+__version__ = '0.1.2'
 
 # global cache of resamplers
 _precomputed_filters = {}
