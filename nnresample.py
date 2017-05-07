@@ -2,10 +2,12 @@ import scipy.signal as sig
 from math import gcd
 import numpy as np
 
+__version__ = '0.1.1'
+
 # global cache of resamplers
 _precomputed_filters = {}
 
-def compute_filt(up, down, beta=5.0, L=16001):
+def compute_filt(up, down, beta=5.0, L=32001):
     r"""
     Computes a filter to resample a signal from rate "down" to rate "up"
     
