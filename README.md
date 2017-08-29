@@ -6,7 +6,7 @@ This package provides a sample rate converter which is basically a wrapper aroun
 and with the special feature that the cutoff frequency of the antialias filter is set
 such that the first null (the point where the main lobe ends and the first side lobe
 begins) falls on the Nyquist frequency (half of the sampling rate).  Thus the name 
-'nnresample" for "Null-on-Nyquist Resample" --- the aternate name 
+'nnresample" for "Null-on-Nyquist Resample" --- the alternate name 
 "nonresample" was deemed too confusing.
 
 Please report bugs at https://github.com/jthiem/nnresample
@@ -25,7 +25,7 @@ newsound = nnresample.resample(sound, newsampleratre, oldsamplerate)
 ## Detailed function description
 
 The functions are written with the assumption that once a particular set of 
-resampling parameters is chosen, you'ss be wanting to use that filter again.
+resampling parameters is chosen, you'll be wanting to use that filter again.
 Since finding the null takes more time than just calculating a filter the default
 way, a filter used once is not recalculated.  For the most part, this happens
 behind the scenes, and you can just call `nnresample.resample()` without
@@ -103,4 +103,3 @@ FIR filter. *** Note the workaround for the bug in scipy ***
     modify the passed filter, so make sure to make a copy beforehand:
     
     out = scipy.signal.resample_poly(in, up, down, window=numpy.array(filt))
-```
