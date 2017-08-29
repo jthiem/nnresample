@@ -19,7 +19,7 @@ License (https://creativecommons.org/licenses/by/3.0/)
 ```
 import nnresample
 
-newsound = nnresample.resample(sound, newsampleratre, olsamplerate)
+newsound = nnresample.resample(sound, newsampleratre, oldsamplerate)
 ```
 
 ## Detailed function description
@@ -102,5 +102,5 @@ FIR filter. *** Note the workaround for the bug in scipy ***
     parameter).  WARNING: Some versions (at least 0.19.1) of scipy
     modify the passed filter, so make sure to make a copy beforehand:
     
-    out = scipy.signal.resample_poly(in up, down, window=numpy.array(filt))
+    out = scipy.signal.resample_poly(in, up, down, window=numpy.array(filt))
 ```

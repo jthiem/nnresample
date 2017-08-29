@@ -71,7 +71,7 @@ def compute_filt(up, down, beta=5.0, L=32001):
     return sig.fir_filter_design.firwin(L, -firstnull+2/max_rate, window=('kaiser', beta))
     
     
-def resample(s, up, down, beta=5.0, L=16001, axis=0):
+def resample(s, up, down, beta=5.0, L=32001, axis=0):
     r"""
     Resample a signal from rate "down" to rate "up"
     
@@ -112,7 +112,7 @@ def resample(s, up, down, beta=5.0, L=16001, axis=0):
         filt = _precomputed_filters[params]
     else:
         # if not, generate filter, store it, use it
-        filt = compute_filt(up, down, beta, L)
+        filt = compute_filt(up, down, beta=beta, L=L)
         _precomputed_filters[params] = filt
         
     return sig.resample_poly(s, up, down, window=np.array(filt), axis=axis)
