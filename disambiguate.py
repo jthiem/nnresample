@@ -1,5 +1,6 @@
 from __future__ import division
 from numpy import ceil
+import logging
 
 def beta_from_As(As):
     """find beta given the stopband attenuation (in dB)
@@ -12,65 +13,45 @@ def beta_from_As(As):
     else:
         return 0.0
 
-def N_from_As_and_df(As, df):
-    """estimate the N required to satisfy a given stopband
-    attenuation (As, in dB) and transition band (df).
-    
-    Standard formula."""
-    return ceil((As-7.95)/14.36*df)
-
-def As_from_beta(beta):
-    raise NotImplementedError()
-
-def As_from_N_and_df(N, df):
-    """Get stopband attenuation given N and transition band width.
-
-    Derived from the standard way to estimate N from As and df."""
-    return 14.36*df*N + 7.95
-
 def disambiguate_params(As=None, N=None, df=None, beta=None):
     """disambiguate the parameters passed to the resampler.
 
     We need two parameters to specify the window, but the ones we
     need to calculate it are not the natural ones we might want to
     specify.  So, we need to figure out N and beta from the parmeters
-    given - if more than 2 are given the priorities are N, As, delta
-    f (df) and beta.  If one parameter (which is not N) is given, we
-    use the default N=32001, if none (or only N) are given, we use
-    As = 60 dB.
+    given: beta is directly related to the stopband attenuation, but
+    the window lenght is a function of the transition band width and the
+    stopband attenuation.
     
-    The function returns N and beta.
+    If beta and As (the stopband attenuation in dB) are given, As is used.
+    If neither is given, assume As = 60 dB.
+    
+    If N is not given, we can compute it from a desired transition band
+    width (and the stopband attenuation), else we use a default of
+    32001 samples.
+    
+    There is one edge case which rare, but is handled first: beta can be
+    derived (via As) if N and df ONLY are given.
     """
     default_N = 32001
     default_As = 60
     
-    if N is not None:
-        if As is not None:
-            return N, beta_from_As(As)
-        else if df is not None:
-            return N, beta_from_As(As_from_N_and_df(N, df))
-        else if beta is not None:
-            return N, beta
-        else:
-            return N, beta_from_As(default_As)
+    if beta is None:
+        if As is None:
+            if N is not None and df is not None:
+                As = 14.36*df*N + 7.95
+            else As = default_As
+            beta = beta_from_As(As)
     else if As is not None:
+        logging.warning('Both beta and the stopband attenuation specified. Stopband attenuation used.')
+        beta = beta_from_As(As)
+
+    assert(beta is not None)
+    assert(As is not None)
+
+    if N is None:
         if df is not None:
-            N = N_from_As_and_df(As, df)
-            return N, beta_from_As(As)
-        else if beta is not None:
-            N = N_from_As_and_beta(As, beta)
-        else:
-            return default_N, beta_from_As(As)
-    else if df is not None:
-        if beta is not None:
-            # I have df and beta.
-            return N_from_As_and_df(As_from_beta(beta), df), beta
-        else:
-            # I have only df
-            return default_N, beta_from_As(As_from_N_and_df(default_N, df))
-    else if beta is not None:
-        # I have only beta
-        return default_N, beta
-    else:
-        # No parameters given
-        return default_N, beta_from_As(default_As)
+            N = ceil((As-7.95)/14.36*df)
+        else N = default_N
+
+    return N, beta

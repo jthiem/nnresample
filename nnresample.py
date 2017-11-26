@@ -7,7 +7,7 @@ try:
 except:
     from fractions import gcd
     
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 # global cache of resamplers
 _precomputed_filters = {}
@@ -88,7 +88,7 @@ def resample(s, up, down, beta=5.0, L=32001, axis=0):
         stopband attenuation and transition band width
     L : int
         FIR filter order.  Determines stopband attenuation.  The higher
-        the better, ath the cost of complexity.
+        the better, at the cost of complexity.
     axis : int, optional
         The axis of `x` that is resampled. Default is 0.
         
