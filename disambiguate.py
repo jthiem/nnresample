@@ -1,20 +1,58 @@
 from __future__ import division
 from numpy import ceil
-import logging
+from scipy.optimize import brentq
 
 def beta_from_As(As):
     """find beta given the stopband attenuation (in dB)
 
-    This is a standard formula."""
+    :param float As: Stopband attenuation in dB
+    :return: the computed beta
+    :rtype: float
+
+    This is a standard formula from Kaiser."""
     if As>50:
         return 0.1102*(As-8.7)
-    else if As>21:
+    elif As>21:
         return 0.5842*(As-21)**0.4 + 0.07886*(As-21)
     else:
         return 0.0
+    
+def As_from_beta(beta):
+    """find stopband attenuation given beta
+    
+    :param float beta: the Kaiser window beta parameter
+    :return: the computed stopband attenuation in dB
+    :rtype: float
 
+    For beta <= 0 we simply return 21. beta<0 makes no sense, but 
+    returning something is better than throwing an exception.
+    
+    The "forward" formula is linear for As>50.  That is easy to
+    handle since the formula is monotonic to boot.
+    
+    In between though, there is no easy way to my knowledge.
+    So, I use a root finder from scipy.
+    """
+    if beta<=0:
+        return 21.0
+    if beta>beta_from_As(50):
+        return 9.07441*beta+8.7
+        
+    return brentq(lambda x: beta_from_As(x)-beta, 0, 50, xtol=0.001, rtol=1e-5)
+    
 def disambiguate_params(As=None, N=None, df=None, beta=None):
     """disambiguate the parameters passed to the resampler.
+
+    :param As: Stopband attenuation in dB
+    :type As: float or none
+    :param N: Filter order (length of impulse response in samples)
+    :type N: int or None
+    :param df: transition band width, normalized to Nyquist (fs/2)
+    :type df: float or none
+    :param beta: the beta parameter of the Kaiser window
+    :type beta: float or none
+    :return: The determined N, beta, and As
+    :rtype: tuple(int, float, float)
 
     We need two parameters to specify the window, but the ones we
     need to calculate it are not the natural ones we might want to
@@ -40,11 +78,16 @@ def disambiguate_params(As=None, N=None, df=None, beta=None):
         if As is None:
             if N is not None and df is not None:
                 As = 14.36*df*N + 7.95
-            else As = default_As
-            beta = beta_from_As(As)
-    else if As is not None:
+            else:
+                As = default_As
+        beta = beta_from_As(As)
+    elif As is not None:
         logging.warning('Both beta and the stopband attenuation specified. Stopband attenuation used.')
         beta = beta_from_As(As)
+    else:
+        # beta is given, but As is not.  To compute the width of the transition
+        # band we need to get As.
+        As = As_from_beta(beta)
 
     assert(beta is not None)
     assert(As is not None)
@@ -52,6 +95,7 @@ def disambiguate_params(As=None, N=None, df=None, beta=None):
     if N is None:
         if df is not None:
             N = ceil((As-7.95)/14.36*df)
-        else N = default_N
+        else:
+            N = default_N
 
-    return N, beta
+    return N, beta, As
