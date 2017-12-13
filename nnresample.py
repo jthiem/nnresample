@@ -6,44 +6,62 @@ try:
     from math import gcd
 except:
     from fractions import gcd
-    
+
 __version__ = '0.1.3'
 
 # global cache of resamplers
 _precomputed_filters = {}
 
-def compute_filt(up, down, beta=5.0, L=32001):
+def compute_filt(up, down, fc='nn', **kwargs):
     r"""
     Computes a filter to resample a signal from rate "down" to rate "up"
-    
+
     Parameters
     ----------
     up : int
         The upsampling factor.
     down : int
         The downsampling factor.
-    beta : float
-        Beta factor for Kaiser window.  Determines tradeoff between
-        stopband attenuation and transition band width
-    L : int
-        FIR filter order.  Determines stopband attenuation.  The higher
-        the better, ath the cost of complexity.
-        
+    fc : float or string (optional)
+        The cutoff frequency. This can be a value from 0 to 1
+        (cutoff frequency relative to Nyquist), or a string
+        specifying 'nn', 'midtrans', or 'kaiser'.
+        'nn' : null-on-Nyquist
+            Two-step procedure searching for the first null of
+            the filter, that is, the edge to the main lobe.  The
+            cutoff is then shifted such that this point is the Nyquist
+            frequency, by recomputing the filter.  This is the
+            default (and the original impetus for writing this
+            package).
+        'midtrans' : f_c on middle of the transition band
+            The 'standard' way of computing the filter such that f_c
+            is at the -6 dB point (attenuation by half).
+        'kaiser' : f_c offset by the Kaiser formula using the estimate
+            of the transition band width.
+    As : float (optional)
+        Stopband attenuation in dB (default=60dB)
+    N : int (optional)
+        Filter order (length in samples, default=32001)
+    df : float
+        Transition band width, normalized to Nyquist (fs/2)
+    beta : float (optional)
+        Kaiser window beta parameter (default is determined from As and N)
+
     Returns
     -------
     filt : array
         The FIR filter coefficients
-        
+
     Notes
     -----
     This function is to be used if you want to manage your own filters
     to be used with scipy.signal.resample_poly (use the `window=...`
     parameter).  WARNING: Some versions (at least 0.19.1) of scipy
     modify the passed filter, so make sure to make a copy beforehand:
-    
+
     out = scipy.signal.resample_poly(in up, down, window=numpy.array(filt))
     """
-    
+
     # Determine our up and down factors
     g = gcd(up, down)
     up = up//g
@@ -51,30 +69,30 @@ def compute_filt(up, down, beta=5.0, L=32001):
     max_rate = max(up, down)
 
     sfact = np.sqrt(1+(beta/np.pi)**2)
-            
+
     # generate first filter attempt: with 6dB attenuation at f_c.
     init_filt = sig.fir_filter_design.firwin(L, 1/max_rate, window=('kaiser', beta))
-    
+
     # convert into frequency domain
     N_FFT = 2**19
     NBINS = N_FFT/2+1
     paddedfilt = np.zeros(N_FFT)
     paddedfilt[:L] = init_filt
     ffilt = np.fft.rfft(paddedfilt)
-    
+
     # now find the minimum between f_c and f_c+sqrt(1+(beta/pi)^2)/L
     bot = int(np.floor(NBINS/max_rate))
     top = int(np.ceil(NBINS*(1/max_rate + 2*sfact/L)))
     firstnull = (np.argmin(np.abs(ffilt[bot:top])) + bot)/NBINS
-    
+
     # generate the proper shifted filter
     return sig.fir_filter_design.firwin(L, -firstnull+2/max_rate, window=('kaiser', beta))
-    
-    
-def resample(s, up, down, beta=5.0, L=32001, axis=0):
+
+
+def resample(s, up, down, axis=0, **kwargs):
     r"""
     Resample a signal from rate "down" to rate "up"
-    
+
     Parameters
     ----------
     x : array_like
@@ -83,28 +101,24 @@ def resample(s, up, down, beta=5.0, L=32001, axis=0):
         The upsampling factor.
     down : int
         The downsampling factor.
-    beta : float
-        Beta factor for Kaiser window.  Determines tradeoff between
-        stopband attenuation and transition band width
-    L : int
-        FIR filter order.  Determines stopband attenuation.  The higher
-        the better, at the cost of complexity.
     axis : int, optional
         The axis of `x` that is resampled. Default is 0.
-        
+    optional parameters (As, N, df, beta):
+        See documentation of compute_filt and disambiguate_params
+
     Returns
     -------
     resampled_x : array
         The resampled array.
-        
+
     Notes
     -----
     The function keeps a global cache of filters, since they are
     determined entirely by up, down, beta, and L.  If a filter
     has previously been used it is looked up instead of being
     recomputed.
-    """   
-    
+    """
+
     # check if a resampling filter with the chosen parameters already exists
     params = (up, down, beta, L)
     if params in _precomputed_filters.keys():
@@ -114,5 +128,5 @@ def resample(s, up, down, beta=5.0, L=32001, axis=0):
         # if not, generate filter, store it, use it
         filt = compute_filt(up, down, beta=beta, L=L)
         _precomputed_filters[params] = filt
-        
+
     return sig.resample_poly(s, up, down, window=np.array(filt), axis=axis)

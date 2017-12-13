@@ -3,33 +3,50 @@ from numpy import ceil
 from scipy.optimize import brentq
 
 def beta_from_As(As):
-    """find beta given the stopband attenuation (in dB)
+    r"""
+    Find beta given the stopband attenuation (in dB)
 
-    :param float As: Stopband attenuation in dB
-    :return: the computed beta
-    :rtype: float
+    Parameters
+    ----------
+    As : float
+        Stopband attenuation in dB
+
+    Returns
+    -------
+    beta : float
+        The computed beta
 
     This is a standard formula from Kaiser."""
+
     if As>50:
         return 0.1102*(As-8.7)
     elif As>21:
         return 0.5842*(As-21)**0.4 + 0.07886*(As-21)
     else:
         return 0.0
-    
-def As_from_beta(beta):
-    """find stopband attenuation given beta
-    
-    :param float beta: the Kaiser window beta parameter
-    :return: the computed stopband attenuation in dB
-    :rtype: float
 
-    For beta <= 0 we simply return 21. beta<0 makes no sense, but 
+def As_from_beta(beta):
+    r"""
+    Find stopband attenuation given beta
+
+    Parameters
+    ----------
+    beta : float
+        The Kaiser window beta parameter
+
+    Returns
+    -------
+    As : float
+        The computed stopband attenuation in dB
+
+    Notes
+    -----
+    For beta <= 0 we simply return 21. beta<0 makes no sense, but
     returning something is better than throwing an exception.
-    
+
     The "forward" formula is linear for As>50.  That is easy to
     handle since the formula is monotonic to boot.
-    
+
     In between though, there is no easy way to my knowledge.
     So, I use a root finder from scipy.
     """
@@ -37,43 +54,51 @@ def As_from_beta(beta):
         return 21.0
     if beta>beta_from_As(50):
         return 9.07441*beta+8.7
-        
+
     return brentq(lambda x: beta_from_As(x)-beta, 0, 50, xtol=0.001, rtol=1e-5)
-    
+
 def disambiguate_params(As=None, N=None, df=None, beta=None):
-    """disambiguate the parameters passed to the resampler.
+    r"""
+    Disambiguate the parameters passed to the resampler.
 
-    :param As: Stopband attenuation in dB
-    :type As: float or none
-    :param N: Filter order (length of impulse response in samples)
-    :type N: int or None
-    :param df: transition band width, normalized to Nyquist (fs/2)
-    :type df: float or none
-    :param beta: the beta parameter of the Kaiser window
-    :type beta: float or none
-    :return: The determined N, beta, and As
-    :rtype: tuple(int, float, float)
+    Parameters
+    ----------
+    As : float
+        Stopband attenuation in dB
+    N : float
+        Filter order (length of impulse response in samples)
+    df : float
+        Transition band width, normalized to Nyquist (fs/2)
+    beta : float
+        The beta parameter of the Kaiser window
 
+    Returns
+    -------
+    N, beta, As: tuple(int, float, float)
+        The computed parameters to generate the window
+
+    Notes
+    -----
     We need two parameters to specify the window, but the ones we
     need to calculate it are not the natural ones we might want to
     specify.  So, we need to figure out N and beta from the parmeters
     given: beta is directly related to the stopband attenuation, but
     the window lenght is a function of the transition band width and the
     stopband attenuation.
-    
+
     If beta and As (the stopband attenuation in dB) are given, As is used.
     If neither is given, assume As = 60 dB.
-    
+
     If N is not given, we can compute it from a desired transition band
     width (and the stopband attenuation), else we use a default of
     32001 samples.
-    
+
     There is one edge case which rare, but is handled first: beta can be
     derived (via As) if N and df ONLY are given.
     """
     default_N = 32001
     default_As = 60
-    
+
     if beta is None:
         if As is None:
             if N is not None and df is not None:
