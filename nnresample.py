@@ -8,12 +8,12 @@ try:
 except:
     from fractions import gcd
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 # global cache of resamplers
 _precomputed_filters = {}
 
-def compute_filt(up, down, fc='nn', beta=5.0, N=32001, As=None, return_fc=False):
+def compute_filt(up, down, fc='nn', beta=5.0, N=32001, return_fc=False):
     r"""
     Computes a filter to resample a signal from rate "down" to rate "up"
 
@@ -34,9 +34,6 @@ def compute_filt(up, down, fc='nn', beta=5.0, N=32001, As=None, return_fc=False)
     N : int (optional)
         FIR filter order.  Determines stopband attenuation.  The higher
         the better, ath the cost of complexity.
-    As : float (optional)
-        Stopband attenuation in dB.  If not given, will be calculated from
-        beta.  Only needed for fc='kaiser'.
     return_fc : bool
         If true, fc (the numerical value) is returned as well. Default false.
 
@@ -79,9 +76,8 @@ def compute_filt(up, down, fc='nn', beta=5.0, N=32001, As=None, return_fc=False)
     # conversly, we can determine the transition band width from the stop
     # band attenuation and filter length.  This allows us to shift fc.
     elif fc == 'kaiser' or fc == 'Kaiser':
-        if As is None:
-            As = As_from_beta(beta)
-        offset = 0.5*(As-7.95)/(14.36*N)
+        As = As_from_beta(beta)
+        offset = (As-7.95)/(14.36*N)
         fc = (1/max_rate)-offset
 
     # The null-on-Nyquist method: the reason I wrote this package in the first
@@ -167,7 +163,7 @@ def resample(s, up, down, axis=0, fc='nn', **kwargs):
         filt = _precomputed_filters[params]
     else:
         # if not, generate filter, store it, use it
-        filt = compute_filt(up, down, fc, beta=beta, N=N, As=As)
+        filt = compute_filt(up, down, fc, beta=beta, N=N)
         _precomputed_filters[params] = filt
 
     return sig.resample_poly(s, up, down, window=np.array(filt), axis=axis)
