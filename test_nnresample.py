@@ -1,6 +1,6 @@
 from nnresample import compute_filt, resample
-from disambiguate import beta_from_As, As_from_beta, disambiguate_params
-from numpy import cumsum, exp, log, sin, logspace, linspace, isclose, zeros, pi
+from utility import beta_from_As, As_from_beta, disambiguate_params
+from numpy import sum, cumsum, exp, log, sin, logspace, linspace, isclose, zeros, pi
 
 # test data
 t441 = linspace(0, 1, 44100)
@@ -21,7 +21,7 @@ def test_As_from_beta():
     assert(isclose(60, As_from_beta(beta_from_As(60))))
     assert(isclose(30, As_from_beta(beta_from_As(30))))
     assert(isclose(25, As_from_beta(beta_from_As(25))))
-    
+
 def test_disambiguate_params_default():
     N, beta, As = disambiguate_params()
     assert(N==32001)
@@ -35,8 +35,16 @@ def test_disambiguate_params_given_As():
     assert(isclose(As, 70))
 
 def test_compute_filt():
-    assert(False)
+    f = compute_filt(3, 2, N=1001)
+    assert(f.shape[0]==1001)
+
+def test_compute_filt_invalid_arg():
+    try:
+        f = compute_filt(3, 2, fc='blah')
+    except Exception as e:
+        pass
 
 def test_resample():
-    assert(False)
-
+    out = resample(refsig441, 480, 441)
+    diff = out - refsig480
+    assert(sum(diff**2)<100.0)

@@ -1,6 +1,7 @@
 from __future__ import division
 from numpy import ceil
 from scipy.optimize import brentq
+import logging
 
 def beta_from_As(As):
     r"""
