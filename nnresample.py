@@ -13,7 +13,7 @@ __version__ = '0.2.0'
 # global cache of resamplers
 _precomputed_filters = {}
 
-def compute_filt(up, down, fc='nn', beta=5.0, N=32001, As=None):
+def compute_filt(up, down, fc='nn', beta=5.0, N=32001, As=None, return_fc=False):
     r"""
     Computes a filter to resample a signal from rate "down" to rate "up"
 
@@ -37,6 +37,8 @@ def compute_filt(up, down, fc='nn', beta=5.0, N=32001, As=None):
     As : float (optional)
         Stopband attenuation in dB.  If not given, will be calculated from
         beta.  Only needed for fc='kaiser'.
+    return_fc : bool
+        If true, fc (the numerical value) is returned as well. Default false.
 
     Returns
     -------
@@ -62,36 +64,32 @@ def compute_filt(up, down, fc='nn', beta=5.0, N=32001, As=None):
     sfact = np.sqrt(1+(beta/np.pi)**2)
 
     if isinstance(fc, float):
-        return sig.fir_filter_design.firwin(N, fc, window=('kaiser', beta))
-
-    assert(isinstance(fc, str))
+        pass
 
     # the "standard" way to generate the filter is to just place fc on the
     # Nyquist frequency, which results in considerable aliasing but is
     # neccesary for perfect reconstruction multirate filterbanks but not
     # for audio resampling!  Included here mostly for completeness and
     # comparison purposes.
-    if fc == 'standard':
-        return sig.fir_filter_design.firwin(N, 1/max_rate,
-                                            window=('kaiser', beta))
+    elif fc == 'standard':
+        fc = 1/max_rate
 
     # The paper by Kaiser gives a formula for the neccesary length of the
     # filter given a desired stopband attenuation and transition band width;
     # conversly, we can determine the transition band width from the stop
     # band attenuation and filter length.  This allows us to shift fc.
-    if fc == 'kaiser' or fc == 'Kaiser':
+    elif fc == 'kaiser' or fc == 'Kaiser':
         if As is None:
             As = As_from_beta(beta)
         offset = 0.5*(As-7.95)/(14.36*N)
-        return sig.fir_filter_design.firwin(N, (1/max_rate)-offset,
-                                            window=('kaiser', beta))
+        fc = (1/max_rate)-offset
 
     # The null-on-Nyquist method: the reason I wrote this package in the first
     # place.  My argument is that the cutoff frequency should be on the border
     # between the main lobe of the filter and the first sidelobe; this should
     # give the best tradeoff between retaining the desired signal and
     # suppressing aliasing.
-    if fc == 'nn':
+    elif fc == 'nn':
         # This is a two-step procedure.  First we generate a filter in the
         # 'normal' way: with 6dB attenuation at Falsef_c.
         init_filt = sig.fir_filter_design.firwin(N, 1/max_rate,
@@ -109,11 +107,19 @@ def compute_filt(up, down, fc='nn', beta=5.0, N=32001, As=None):
         top = int(np.ceil(NBINS*(1/max_rate + 2*sfact/N)))
         firstnull = (np.argmin(np.abs(ffilt[bot:top])) + bot)/NBINS
 
-        # Finally, generate the proper shifted filter, and return it.
-        return sig.fir_filter_design.firwin(N, -firstnull+2/max_rate,
-                                            window=('kaiser', beta))
+        # get the new fc
+        fc = -firstnull+2/max_rate
 
-    raise ValueError('Unknown option for fc in compute_filt')
+    else:
+        raise ValueError('Unknown option for fc in compute_filt')
+
+    # Now we can generate the desired filter
+    f = sig.fir_filter_design.firwin(N, fc, window=('kaiser', beta))
+
+    if return_fc:
+        return f, fc
+    else:
+        return f
 
 def resample(s, up, down, axis=0, fc='nn', **kwargs):
     r"""
