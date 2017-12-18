@@ -1,6 +1,6 @@
-from nnresample import compute_filt, resample
-from utility import beta_from_As, As_from_beta, disambiguate_params
-from numpy import sum, cumsum, exp, log, sin, logspace, linspace, isclose, zeros, pi
+from nnresample.nnresample import compute_filt, resample
+from nnresample.utility import beta_from_As, As_from_beta, disambiguate_params
+from numpy import sum, cumsum, exp, log, sin, linspace, isclose, zeros, pi
 
 # test data
 t441 = linspace(0, 1, 44100)
