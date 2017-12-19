@@ -10,6 +10,6 @@ setup(name='nnresample',
       license='CC-BY 3.0',
       packages=find_packages(include=['nnresample']),
       install_requires=[
-          'scipy>=0.18.0,<=1.0.0'  # NumPy is a dependancy of SciPy
+          'scipy>=0.18.0,<2.0.0'  # NumPy is a dependancy of SciPy
       ]
       )
