@@ -1,14 +1,12 @@
 from __future__ import division
 import scipy.signal as sig
 import numpy as np
-from utility import disambiguate_params, As_from_beta
+from nnresample.utility import disambiguate_params, As_from_beta
 
 try:
     from math import gcd
 except:
     from fractions import gcd
-
-__version__ = '0.2.1'
 
 # global cache of resamplers
 _precomputed_filters = {}
