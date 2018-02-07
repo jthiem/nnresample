@@ -1,4 +1,4 @@
-__version__ = '0.2.2'
+__version__ = '0.2.3'
 
-from nnresample.nnresample import resample, compute_filt
+from .nnresample import resample, compute_filt
 from . import utility
