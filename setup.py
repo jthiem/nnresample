@@ -1,8 +1,7 @@
 from setuptools import setup, find_packages
-import nnresample
 
 setup(name='nnresample',
-      version=nnresample.__version__,
+      version='0.2.4',
       description='A resampling function based on placing the first null on Nyquist (Null-on-Nyquist Resample)',
       url='https://github.com/jthiem/nnresample',
       author='Joachim Thiemann',
