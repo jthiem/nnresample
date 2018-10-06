@@ -1,0 +1,14 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+module = "nnresample"
+author = "Joachim Thiemann"
+author-email = "Joachim.Thiemann@gmail.com"
+home-page = "https://github.com/jthiem/nnresample"
+requires = [
+    "scipy >= 0.18.0, < 2.0.0",
+]
+license = "CC-BY 3.0"
+description-file = "README.md"
