@@ -11,8 +11,7 @@ begins) falls on the Nyquist frequency (half of the sampling rate).  Thus the na
 
 Please report bugs at https://github.com/jthiem/nnresample
 
-This code is licensed under a Creative Commons Attribution 3.0 Unported (CC BY 3.0)
-License (https://creativecommons.org/licenses/by/3.0/)
+This code is licensed under the MIT License (please see the LICENSE file).
 
 ## Usage
 
