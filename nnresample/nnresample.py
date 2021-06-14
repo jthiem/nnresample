@@ -50,6 +50,10 @@ def compute_filt(up, down, fc='nn', beta=5.0, N=32001, return_fc=False):
     out = scipy.signal.resample_poly(in up, down, window=numpy.array(filt))
     """
 
+    # see explanation in resample below
+    if up==down:
+        raise ValueError('upsampling and downsampling rate cannot be the same.')
+
     # Determine our up and down factors
     g = gcd(up, down)
     up = up//g
@@ -150,6 +154,15 @@ def resample(s, up, down, axis=0, fc='nn', **kwargs):
     has previously been used it is looked up instead of being
     recomputed.
     """
+
+    # BUG FIX: if up==down, sig.fir_filter_design.firwin will throw
+    # an exception. In compute_filt that is OK (the user is assumed
+    # to know what they are doing if they use that function), but in
+    # the "user-friendly" resample function, we should just silently
+    # return a copy of the input. (Principle of least surprise)
+    # Thanks to johndoe46 on github for pointing this out.
+    if up==down:
+        return np.array(s)
 
     # from design parameters, find the generative parameters
     N, beta, As = disambiguate_params(**kwargs)

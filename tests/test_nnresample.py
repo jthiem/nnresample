@@ -45,6 +45,9 @@ class NNResampleUnittest(unittest.TestCase):
     def test_compute_filt_invalid_arg(self):
         self.assertRaises(ValueError, compute_filt, 3, 2, fc='blah')
 
+    def test_compute_filt_samerate(self):
+        self.assertRaises(ValueError, compute_filt, self.refsig441, 441, 441)
+
     def test_resample(self):
         out = resample(self.refsig441, 480, 441)
         diff = out - self.refsig480
